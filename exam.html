@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>آزمون تربیت بدنی | دانشگاه فرهنگیان</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --ink:#123329; --ink-soft:#3c5a50; --line:#d7e3dc;
+  --bg:#f4f7f4; --surface:#ffffff; --surface-2:#eef4ee;
+  --brand:#1f6b52; --brand-dark:#134a39; --brand-light:#e4f0e8;
+  --gold:#c99a3a; --danger:#b3492f;
+  --radius:14px;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ink:#eaf1ec; --ink-soft:#b9c9c0; --line:#25493c;
+    --bg:#0d1f18; --surface:#122c22; --surface-2:#173627;
+    --brand:#3fa47f; --brand-dark:#2c8064; --brand-light:#173a2c;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#eaf1ec; --ink-soft:#b9c9c0; --line:#25493c;
+  --bg:#0d1f18; --surface:#122c22; --surface-2:#173627;
+  --brand:#3fa47f; --brand-dark:#2c8064; --brand-light:#173a2c;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Vazirmatn',sans-serif;line-height:1.7}
+img{max-width:100%}
+.wrap{max-width:760px;margin:0 auto;padding:28px 18px 60px}
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:22px}
+.brand .dot{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--brand),var(--gold));flex:none}
+.brand h1{font-size:16px;margin:0;font-weight:700;color:var(--ink)}
+.brand span{display:block;font-size:12.5px;color:var(--ink-soft);font-weight:500}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:24px;margin-bottom:16px}
+.title{font-size:22px;font-weight:800;margin:0 0 6px}
+.sub{color:var(--ink-soft);font-size:14.5px;margin:0 0 20px}
+label{display:block;font-size:13.5px;font-weight:600;color:var(--ink-soft);margin:14px 0 6px}
+input[type=text],input[type=email],input[type=number],textarea{
+  width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:10px;
+  background:var(--surface-2);color:var(--ink);font-family:inherit;font-size:15px;outline:none;transition:border-color .15s
+}
+input:focus,textarea:focus{border-color:var(--brand)}
+textarea{resize:vertical;min-height:90px}
+.btn{appearance:none;border:none;border-radius:11px;padding:13px 22px;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;transition:transform .1s, opacity .15s}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--brand);color:#fff;width:100%}
+.btn-primary:hover{background:var(--brand-dark)}
+.btn-ghost{background:transparent;color:var(--brand);border:1.5px solid var(--brand)}
+.btn-gold{background:var(--gold);color:#3a2a06}
+.err{color:var(--danger);font-size:13px;margin-top:10px;display:none}
+.top-timer{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--brand-dark);color:#fff;padding:10px 16px;border-radius:0 0 12px 12px;display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:14px;margin-bottom:18px}
+.qcard{margin-bottom:14px}
+.qhead{display:flex;gap:10px;align-items:flex-start;margin-bottom:12px}
+.qnum{flex:none;width:28px;height:28px;border-radius:8px;background:var(--brand-light);color:var(--brand-dark);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800}
+.qtext{font-weight:600;font-size:15.5px}
+.opt{display:flex;align-items:center;gap:10px;padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;margin-bottom:8px;cursor:pointer;font-size:14.5px}
+.opt:hover{border-color:var(--brand)}
+.opt input{accent-color:var(--brand)}
+.opt.sel{border-color:var(--brand);background:var(--brand-light)}
+.progress{height:6px;background:var(--line);border-radius:99px;overflow:hidden;margin-bottom:18px}
+.progress i{display:block;height:100%;background:var(--gold);transition:width .3s}
+.footlink{text-align:center;margin-top:26px;font-size:12px;color:var(--ink-soft);opacity:.6}
+.footlink a{color:inherit}
+.donewrap{text-align:center;padding:50px 20px}
+.donewrap .big{font-size:44px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{padding:9px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th{color:var(--ink-soft);font-weight:700;font-size:12.5px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:18px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;text-align:center}
+.stat b{display:block;font-size:24px;color:var(--brand)}
+.stat span{font-size:12px;color:var(--ink-soft)}
+.rowbtns{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.hidden{display:none !important}
+.scrollx{overflow-x:auto}
+.chartbox{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px}
+.chartbox h4{margin:0 0 10px;font-size:13.5px}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center;z-index:50}
+.modal{background:var(--surface);border-radius:16px 16px 0 0;max-width:760px;width:100%;max-height:85vh;overflow:auto;padding:20px}
+.chip{display:inline-block;background:var(--brand-light);color:var(--brand-dark);border-radius:99px;padding:3px 10px;font-size:12px;font-weight:700;margin-inline-end:6px}
+@media print{
+  body *{visibility:hidden}
+  #printSheet,#printSheet *{visibility:visible}
+  #printSheet{position:absolute;inset:0;padding:20px}
+}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<div id="printSheet" class="hidden"></div>
+
+<script>
+/* ---------- داده سوالات (نمونه — قابل جایگزینی) ---------- */
+const QUESTIONS = [
+ {id:1,type:'mcq',q:'کدام یک از موارد زیر جزو اصول پایه گرم کردن بدن پیش از فعالیت ورزشی است؟',opts:['افزایش تدریجی ضربان قلب','شروع با حرکات کششی شدید','نوشیدن آب سرد فراوان','استراحت کامل عضلات']},
+ {id:2,type:'mcq',q:'ورزش هوازی (Aerobic) عمدتاً کدام سیستم بدن را تقویت می‌کند؟',opts:['سیستم قلبی-تنفسی','سیستم گوارش','سیستم عصبی مرکزی','سیستم ایمنی فقط']},
+ {id:3,type:'mcq',q:'در والیبال، کدام مهارت برای شروع امتیاز از پشت خط انتهایی زمین استفاده می‌شود؟',opts:['سرویس','بلاک','اسپک','پاس']},
+ {id:4,type:'mcq',q:'کدام گزینه یکی از فواید فعالیت بدنی منظم برای دانشجویان است؟',opts:['کاهش استرس و بهبود تمرکز','افزایش خستگی مزمن','کاهش ظرفیت ریوی','کاهش تراکم استخوان']},
+ {id:5,type:'mcq',q:'در فوتبال، خطای «آفساید» زمانی رخ می‌دهد که بازیکن مهاجم:',opts:['نزدیک‌تر از توپ و مدافع آخر به خط دروازه حریف باشد','توپ را با دست لمس کند','خارج از زمین برود','به دروازه‌بان تنه بزند']},
+ {id:6,type:'mcq',q:'کدام یک از این حرکات جزو تمرینات انعطاف‌پذیری (Flexibility) محسوب می‌شود؟',opts:['کشش استاتیک عضلات همسترینگ','دویدن سرعتی','وزنه‌برداری سنگین','شنای غیراستقامتی']},
+ {id:7,type:'mcq',q:'ضربان قلب هدف در تمرینات هوازی متوسط معمولاً چند درصد ضربان قلب بیشینه است؟',opts:['۶۰ تا ۷۰ درصد','۱۰ تا ۲۰ درصد','۹۵ تا ۱۰۰ درصد','۳۰ تا ۴۰ درصد']},
+ {id:8,type:'mcq',q:'در بسکتبال، اصطلاح «دبل دریبل» به چه معناست؟',opts:['دریبل مجدد پس از نگه‌داشتن توپ با دو دست','پاس دو دستی','پرتاب آزاد دوم','دفاع دو نفره']},
+ {id:9,type:'mcq',q:'کدام گروه غذایی نقش اصلی را در بازسازی عضلات پس از تمرین ورزشی دارد؟',opts:['پروتئین‌ها','قندهای ساده فراوان','چربی‌های اشباع','نوشابه‌های گازدار']},
+ {id:10,type:'mcq',q:'در تربیت‌بدنی مدارس، هدف اصلی «آمادگی جسمانی» (Physical Fitness) چیست؟',opts:['توانایی انجام فعالیت‌های روزمره بدون خستگی بیش از حد','فقط افزایش قدرت عضلانی','فقط کاهش وزن','فقط سرعت دویدن']},
+ {id:11,type:'mcq',q:'کدام یک اصل صحیح ایمنی هنگام اجرای تمرینات ورزشی گروهی است؟',opts:['رعایت فاصله ایمن و استفاده از تجهیزات مناسب','انجام حرکات بدون گرم کردن','نادیده گرفتن درد ناگهانی','استفاده از کفش نامناسب']},
+ {id:12,type:'mcq',q:'کدام مهارت حرکتی جزو مهارت‌های بنیادی (Fundamental Movement Skills) کودکان است؟',opts:['دویدن، پریدن و پرتاب کردن','مدیریت زمان','حل مسئله ریاضی','خواندن متن']},
+ {id:13,type:'mcq',q:'اصطلاح «استقامت عضلانی» به چه معناست؟',opts:['توانایی عضله برای انقباض مکرر در برابر مقاومت','حداکثر نیروی یک انقباض','سرعت انقباض عضله','دامنه حرکتی مفصل']},
+ {id:14,type:'mcq',q:'کدام مورد زیر یک اصل صحیح برنامه‌ریزی تمرینی است؟',opts:['اصل تدریجی بودن (Progressive Overload)','افزایش ناگهانی شدت بدون آمادگی','حذف کامل زمان استراحت','تکرار یک تمرین ثابت برای همیشه']},
+ {id:15,type:'mcq',q:'در شنا، کدام یک از سبک‌های چهارگانه رسمی مسابقات است؟',opts:['کرال سینه (فرانتکرال)','شنای سگی','شنای روی شکم آزاد','غواصی بدون تجهیزات']},
+ {id:16,type:'essay',q:'به نظر شما فعالیت بدنی منظم چه تأثیری بر عملکرد تحصیلی دانشجویان دارد؟ به‌طور خلاصه توضیح دهید.'},
+ {id:17,type:'essay',q:'یک برنامه گرم کردن ۱۰ دقیقه‌ای پیش از یک جلسه تمرین ورزشی پیشنهاد دهید.'},
+ {id:18,type:'essay',q:'تفاوت اصلی بین تمرینات هوازی و بی‌هوازی را با یک مثال از هرکدام بنویسید.'},
+ {id:19,type:'essay',q:'چه راهکارهایی برای افزایش انگیزه دانشجویان به شرکت در فعالیت‌های ورزشی دانشگاه پیشنهاد می‌کنید؟'},
+ {id:20,type:'essay',q:'یک خاطره یا تجربه شخصی از ورزش که در شکل‌گیری روحیه شما تأثیرگذار بوده را بنویسید.'}
+];
+const EXAM_SECONDS = 30*60;
+const ADMIN_USER='admin', ADMIN_PASS='admin';
+const STORE_KEY='pe_exam_submissions_v1';
+
+function loadSubs(){ try{return JSON.parse(localStorage.getItem(STORE_KEY)||'[]')}catch(e){return []} }
+function saveSubs(list){ try{localStorage.setItem(STORE_KEY, JSON.stringify(list))}catch(e){} }
+function addSub(sub){ const list=loadSubs(); list.push(sub); saveSubs(list); }
+
+let state = { view:'info', student:null, answers:{}, timeLeft:EXAM_SECONDS, timerId:null, qIndex:0 };
+
+const app = document.getElementById('app');
+function render(){ app.innerHTML=''; 
+  if(state.view==='info') return renderInfo();
+  if(state.view==='quiz') return renderQuiz();
+  if(state.view==='done') return renderDone();
+  if(state.view==='adminLogin') return renderAdminLogin();
+  if(state.view==='admin') return renderAdmin();
+}
+function brandHeader(sub){ const d=document.createElement('div'); d.className='brand';
+  d.innerHTML='<div class="dot"></div><div><h1>آزمون تربیت بدنی</h1><span>'+sub+'</span></div>'; return d; }
+
+/* ---------- فرم اطلاعات ---------- */
+function renderInfo(){
+  app.appendChild(brandHeader('دانشجویان ورودی جدید — دانشگاه فرهنگیان'));
+  const card=document.createElement('div'); card.className='card';
+  card.innerHTML=`
+    <p class="title">ورود به آزمون</p>
+    <p class="sub">لطفاً اطلاعات زیر را با دقت تکمیل کنید. پس از ثبت، مستقیماً وارد آزمون می‌شوید. زمان آزمون ۳۰ دقیقه است.</p>
+    <label>نام</label><input id="f_fn" type="text" placeholder="مثلاً علی">
+    <label>نام خانوادگی</label><input id="f_ln" type="text" placeholder="مثلاً رضایی">
+    <label>نام پدر</label><input id="f_fa" type="text" placeholder="مثلاً محمد">
+    <label>سال ورود به دانشگاه</label><input id="f_ey" type="text" inputmode="numeric" placeholder="مثلاً ۱۴۰۴">
+    <label>سال تولد</label><input id="f_by" type="text" inputmode="numeric" placeholder="مثلاً ۱۳۸۵">
+    <label>ایمیل</label><input id="f_em" type="email" placeholder="example@gmail.com">
+    <p class="err" id="f_err">لطفاً همه فیلدها را تکمیل کنید.</p>
+    <div style="margin-top:18px"><button class="btn btn-primary" id="f_go">شروع آزمون</button></div>
+  `;
+  app.appendChild(card);
+  const footer=document.createElement('div'); footer.className='footlink';
+  footer.innerHTML='<a href="#admin" id="admLink">ورود مدیر</a>';
+  app.appendChild(footer);
+  document.getElementById('admLink').onclick=(e)=>{e.preventDefault(); state.view='adminLogin'; render();};
+  document.getElementById('f_go').onclick=()=>{
+    const fn=val('f_fn'),ln=val('f_ln'),fa=val('f_fa'),ey=val('f_ey'),by=val('f_by'),em=val('f_em');
+    if(!fn||!ln||!fa||!ey||!by||!em){ document.getElementById('f_err').style.display='block'; return; }
+    state.student={firstName:fn,lastName:ln,fatherName:fa,entryYear:ey,birthYear:by,email:em};
+    state.answers={}; state.qIndex=0; state.timeLeft=EXAM_SECONDS; state.view='quiz';
+    render(); startTimer();
+  };
+}
+function val(id){ return document.getElementById(id).value.trim(); }
+
+/* ---------- آزمون ---------- */
+function startTimer(){
+  clearInterval(state.timerId);
+  state.timerId=setInterval(()=>{
+    state.timeLeft--;
+    const t=document.getElementById('timerVal');
+    if(t) t.textContent=fmtTime(state.timeLeft);
+    if(state.timeLeft<=0){ clearInterval(state.timerId); submitExam(); }
+  },1000);
+}
+function fmtTime(s){ const m=Math.floor(s/60), ss=s%60; return String(m).padStart(2,'0')+':'+String(ss).padStart(2,'0'); }
+
+function renderQuiz(){
+  const bar=document.createElement('div'); bar.className='top-timer';
+  bar.innerHTML='<span>⏱ زمان باقی‌مانده</span><span id="timerVal">'+fmtTime(state.timeLeft)+'</span>';
+  app.appendChild(bar);
+  app.appendChild(brandHeader(state.student.firstName+' '+state.student.lastName));
+  const answered=Object.keys(state.answers).length;
+  const prog=document.createElement('div'); prog.className='progress';
+  prog.innerHTML='<i style="width:'+Math.round(answered/QUESTIONS.length*100)+'%"></i>';
+  app.appendChild(prog);
+
+  QUESTIONS.forEach((q,idx)=>{
+    const c=document.createElement('div'); c.className='card qcard';
+    let inner='<div class="qhead"><div class="qnum">'+(idx+1)+'</div><div class="qtext">'+q.q+'</div></div>';
+    c.innerHTML=inner;
+    if(q.type==='mcq'){
+      q.opts.forEach((o,oi)=>{
+        const lab=document.createElement('label'); lab.className='opt'+(state.answers[q.id]===o?' sel':'');
+        lab.style.margin='0 0 8px 0';
+        lab.innerHTML='<input type="radio" name="q'+q.id+'" '+(state.answers[q.id]===o?'checked':'')+'><span>'+o+'</span>';
+        lab.onclick=()=>{ state.answers[q.id]=o; render(); };
+        c.appendChild(lab);
+      });
+    } else {
+      const ta=document.createElement('textarea'); ta.placeholder='پاسخ خود را بنویسید...';
+      ta.value=state.answers[q.id]||'';
+      ta.oninput=()=>{ state.answers[q.id]=ta.value; };
+      c.appendChild(ta);
+    }
+    app.appendChild(c);
+  });
+  const submitBtn=document.createElement('button'); submitBtn.className='btn btn-primary'; submitBtn.textContent='پایان و ارسال آزمون';
+  submitBtn.onclick=()=>{ if(confirm('آیا مطمئن هستید که می‌خواهید آزمون را ارسال کنید؟')) submitExam(); };
+  app.appendChild(submitBtn);
+}
+function submitExam(){
+  clearInterval(state.timerId);
+  const sub={ id:'s_'+Date.now()+'_'+Math.random().toString(36).slice(2,7), ...state.student,
+    answers: QUESTIONS.map(q=>({id:q.id,q:q.q,type:q.type,answer:state.answers[q.id]||''})),
+    submittedAt: new Date().toISOString() };
+  addSub(sub);
+  state.view='done'; render();
+}
+function renderDone(){
+  app.appendChild(brandHeader('پایان آزمون'));
+  const c=document.createElement('div'); c.className='card donewrap';
+  c.innerHTML='<div class="big">✅</div><p class="title">آزمون شما با موفقیت ثبت شد</p><p class="sub">از مشارکت شما در این پژوهش سپاسگزاریم.</p>';
+  app.appendChild(c);
+}
+
+/* ---------- ورود مدیر ---------- */
+function renderAdminLogin(){
+  app.appendChild(brandHeader('پنل مدیریت'));
+  const c=document.createElement('div'); c.className='card';
+  c.innerHTML=`<p class="title">ورود مدیر</p>
+   <label>نام کاربری</label><input id="a_u" type="text">
+   <label>رمز عبور</label><input id="a_p" type="text">
+   <p class="err" id="a_err">نام کاربری یا رمز عبور اشتباه است.</p>
+   <div style="margin-top:16px"><button class="btn btn-primary" id="a_go">ورود</button></div>`;
+  app.appendChild(c);
+  document.getElementById('a_go').onclick=()=>{
+    if(val('a_u')===ADMIN_USER && val('a_p')===ADMIN_PASS){ state.view='admin'; render(); }
+    else document.getElementById('a_err').style.display='block';
+  };
+}
+
+/* ---------- پنل مدیریت ---------- */
+function renderAdmin(){
+  app.appendChild(brandHeader('پنل مدیریت — نتایج آزمون'));
+  const subs=loadSubs();
+  const mcqCount=QUESTIONS.filter(q=>q.type==='mcq').length;
+  const statWrap=document.createElement('div'); statWrap.className='stats';
+  statWrap.innerHTML=`<div class="stat"><b>${subs.length}</b><span>تعداد شرکت‌کنندگان</span></div>
+    <div class="stat"><b>${QUESTIONS.length}</b><span>تعداد سوالات</span></div>
+    <div class="stat"><b>۳۰</b><span>دقیقه زمان آزمون</span></div>`;
+  app.appendChild(statWrap);
+
+  const rowbtns=document.createElement('div'); rowbtns.className='rowbtns';
+  rowbtns.innerHTML=`<button class="btn btn-gold" id="btnXlsx">دانلود اکسل کامل</button>
+    <button class="btn btn-ghost" id="btnRefresh">به‌روزرسانی</button>
+    <button class="btn btn-ghost" id="btnLogout">خروج</button>`;
+  app.appendChild(rowbtns);
+  document.getElementById('btnRefresh').onclick=()=>render();
+  document.getElementById('btnLogout').onclick=()=>{state.view='info';render();};
+  document.getElementById('btnXlsx').onclick=()=>exportExcel(subs);
+
+  if(subs.length>0){
+    QUESTIONS.filter(q=>q.type==='mcq').forEach(q=>{
+      const box=document.createElement('div'); box.className='chartbox';
+      box.innerHTML='<h4>سوال '+q.id+': '+q.q+'</h4><canvas id="c_'+q.id+'" height="140"></canvas>';
+      app.appendChild(box);
+    });
+  }
+
+  const tblCard=document.createElement('div'); tblCard.className='card scrollx';
+  let rows=subs.map(s=>`<tr>
+      <td>${s.firstName} ${s.lastName}</td><td>${s.fatherName}</td><td>${s.entryYear}</td>
+      <td>${s.birthYear}</td><td>${s.email}</td><td>${new Date(s.submittedAt).toLocaleString('fa-IR')}</td>
+      <td><button class="btn btn-ghost" style="padding:6px 12px;font-size:12px" onclick="viewSub('${s.id}')">مشاهده/چاپ</button></td>
+    </tr>`).join('');
+  tblCard.innerHTML = subs.length? `<table><thead><tr><th>نام و نام‌خانوادگی</th><th>نام پدر</th><th>سال ورود</th><th>سال تولد</th><th>ایمیل</th><th>زمان ثبت</th><th></th></tr></thead><tbody>${rows}</tbody></table>`
+    : '<p class="sub" style="margin:0">هنوز هیچ دانشجویی در آزمون شرکت نکرده است.</p>';
+  app.appendChild(tblCard);
+
+  const note=document.createElement('p'); note.className='footlink';
+  note.textContent='داده‌ها به‌صورت محلی روی همین مرورگر ذخیره می‌شوند.';
+  app.appendChild(note);
+
+  if(subs.length>0){
+    setTimeout(()=>{
+      QUESTIONS.filter(q=>q.type==='mcq').forEach(q=>{
+        const counts={}; q.opts.forEach(o=>counts[o]=0);
+        subs.forEach(s=>{ const a=s.answers.find(x=>x.id===q.id); if(a && counts[a.answer]!==undefined) counts[a.answer]++; });
+        const ctx=document.getElementById('c_'+q.id);
+        if(ctx && window.Chart) new Chart(ctx,{type:'bar',data:{labels:q.opts,datasets:[{data:Object.values(counts),backgroundColor:'#1f6b52',borderRadius:6}]},
+          options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}});
+      });
+    },50);
+  }
+}
+
+function exportExcel(subs){
+  const rows=subs.map(s=>{
+    const base={ 'نام':s.firstName,'نام خانوادگی':s.lastName,'نام پدر':s.fatherName,'سال ورود':s.entryYear,'سال تولد':s.birthYear,'ایمیل':s.email,'زمان ثبت':new Date(s.submittedAt).toLocaleString('fa-IR') };
+    s.answers.forEach(a=>{ base['س'+a.id]=a.answer; });
+    return base;
+  });
+  const ws=XLSX.utils.json_to_sheet(rows);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'نتایج');
+  XLSX.writeFile(wb,'نتایج-آزمون-تربیت-بدنی.xlsx');
+}
+
+function viewSub(id){
+  const subs=loadSubs(); const s=subs.find(x=>x.id===id); if(!s) return;
+  const ps=document.getElementById('printSheet');
+  let qa=s.answers.map(a=>'<div style="margin-bottom:12px"><b>'+a.q+'</b><div style="margin-top:4px;color:#333">'+(a.answer||'—')+'</div></div>').join('');
+  ps.innerHTML=`<div style="font-family:Vazirmatn,sans-serif;direction:rtl">
+    <h2>برگه آزمون تربیت بدنی — دانشگاه فرهنگیان</h2>
+    <p><b>نام و نام‌خانوادگی:</b> ${s.firstName} ${s.lastName} &nbsp; | &nbsp; <b>نام پدر:</b> ${s.fatherName}</p>
+    <p><b>سال ورود:</b> ${s.entryYear} &nbsp; | &nbsp; <b>سال تولد:</b> ${s.birthYear} &nbsp; | &nbsp; <b>ایمیل:</b> ${s.email}</p>
+    <p><b>زمان ثبت:</b> ${new Date(s.submittedAt).toLocaleString('fa-IR')}</p><hr>${qa}</div>`;
+  ps.classList.remove('hidden');
+  window.print();
+  setTimeout(()=>ps.classList.add('hidden'),500);
+}
+
+if(location.hash==='#admin'){ state.view='adminLogin'; }
+render();
+</script>
+</body>
+</html>
