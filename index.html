@@ -175,6 +175,9 @@ const REACTION_DELAY = 500;
 function buildReactionSequence(){ const seq=[]; for(let i=0;i<REACTION_TRIALS;i++) seq.push(COLORS[Math.floor(Math.random()*4)]); return seq; }
 
 function loadSubs(){ try{return JSON.parse(localStorage.getItem(STORE_KEY)||'[]')}catch(e){return []} }
+function nowTehranStr(){
+  return new Date().toLocaleString('fa-IR',{timeZone:'Asia/Tehran',hour12:false});
+}
 function saveSubs(list){ try{localStorage.setItem(STORE_KEY, JSON.stringify(list))}catch(e){} }
 function addSub(sub){ const list=loadSubs(); list.push(sub); saveSubs(list); }
 
@@ -411,7 +414,7 @@ function submitExam(){
     psychAnswers: PSYCH_QUESTIONS.map(q=>({id:q.id,dim:q.dim,q:q.q,value:state.psychAnswers[q.id]||null})),
     cognitiveFlexScore: avg(flexVals), mindfulAttnScore: avg(mindVals),
     reactionTrials: rt, reactionAvgMs: avgRt, reactionAccuracy: rt.length? Math.round(correctRt.length/rt.length*100) : null,
-    submittedAt: new Date().toISOString() };
+    submittedAt: nowTehranStr() };
   addSub(sub);
   state.view='done'; render();
   sendPdfToAdmin(sub, (msg)=>{ const el=document.getElementById('sendStatus'); if(el) el.textContent=msg; });
@@ -477,7 +480,7 @@ function renderAdmin(){
   let rows=subs.map(s=>`<tr>
       <td>${s.firstName} ${s.lastName}</td><td>${s.nationalCode||'—'}</td><td>${s.fatherName}</td><td>${s.entryYear}</td>
       <td>${s.birthYear}</td><td>${s.email}</td><td>${s.reactionAvgMs??'—'}</td><td>${s.reactionAccuracy!=null?s.reactionAccuracy+'٪':'—'}</td>
-      <td>${new Date(s.submittedAt).toLocaleString('fa-IR')}</td>
+      <td>${s.submittedAt}</td>
       <td><button class="btn btn-ghost" style="padding:6px 12px;font-size:12px" onclick="viewSub('${s.id}')">مشاهده/چاپ</button></td>
     </tr>`).join('');
   tblCard.innerHTML = subs.length? `<table><thead><tr><th>نام و نام‌خانوادگی</th><th>کد ملی</th><th>نام پدر</th><th>سال ورود</th><th>سال تولد</th><th>ایمیل</th><th>زمان واکنش</th><th>دقت</th><th>زمان ثبت</th><th></th></tr></thead><tbody>${rows}</tbody></table>`
@@ -509,7 +512,7 @@ function exportExcel(subs){
   const rows=subs.map(s=>{
     const base={ 'نام':s.firstName,'نام خانوادگی':s.lastName,'کد ملی':s.nationalCode||'','نام پدر':s.fatherName,'سال ورود':s.entryYear,'سال تولد':s.birthYear,'ایمیل':s.email,
       'نمره انعطاف‌پذیری شناختی':s.cognitiveFlexScore??'', 'نمره توجه ذهن‌آگاهانه':s.mindfulAttnScore??'',
-      'میانگین زمان واکنش (ms)':s.reactionAvgMs??'', 'دقت واکنش (%)':s.reactionAccuracy??'', 'زمان ثبت':new Date(s.submittedAt).toLocaleString('fa-IR') };
+      'میانگین زمان واکنش (ms)':s.reactionAvgMs??'', 'دقت واکنش (%)':s.reactionAccuracy??'', 'زمان ثبت':s.submittedAt };
     s.answers.forEach(a=>{ base['س'+a.id]=a.answer; });
     (s.reactionTrials||[]).forEach(t=>{ base['واکنش-مرحله'+t.trial]=t.rt+(t.correct?'':'*'); });
     return base;
@@ -540,7 +543,7 @@ function buildReportHTML(s){
     <h2>برگه آزمون تربیت بدنی — دانشگاه فرهنگیان</h2>
     <p><b>نام و نام‌خانوادگی:</b> ${s.firstName} ${s.lastName} &nbsp; | &nbsp; <b>کد ملی:</b> ${s.nationalCode||'—'} &nbsp; | &nbsp; <b>نام پدر:</b> ${s.fatherName}</p>
     <p><b>سال ورود:</b> ${s.entryYear} &nbsp; | &nbsp; <b>سال تولد:</b> ${s.birthYear} &nbsp; | &nbsp; <b>ایمیل:</b> ${s.email}</p>
-    <p><b>زمان ثبت:</b> ${new Date(s.submittedAt).toLocaleString('fa-IR')}</p>
+    <p><b>زمان ثبت:</b> ${s.submittedAt}</p>
     <p><b>میانگین زمان واکنش:</b> ${s.reactionAvgMs??'—'} میلی‌ثانیه &nbsp; | &nbsp; <b>دقت واکنش:</b> ${s.reactionAccuracy!=null?s.reactionAccuracy+'٪':'—'}</p>
     <p><b>نمره انعطاف‌پذیری شناختی:</b> ${s.cognitiveFlexScore??'—'} از ۵ &nbsp; | &nbsp; <b>نمره توجه ذهن‌آگاهانه:</b> ${s.mindfulAttnScore??'—'} از ۵</p>
     <p><b>پاسخ‌های صحیح تستی:</b> ${mcqCorrectCount} از ${mcqTotal}</p>
