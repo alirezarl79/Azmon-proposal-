@@ -231,7 +231,7 @@ function renderInfo(){
     const fn=val('f_fn'),ln=val('f_ln'),fa=val('f_fa'),nc=toEnDigits(val('f_nc')),ey=toEnDigits(val('f_ey')),by=toEnDigits(val('f_by')),em=val('f_em');
     document.getElementById('f_err').style.display='none'; document.getElementById('f_dup').style.display='none';
     if(!fn||!ln||!fa||!nc||!ey||!by||!em){ document.getElementById('f_err').textContent='لطفاً همه فیلدها را تکمیل کنید.'; document.getElementById('f_err').style.display='block'; return; }
-    if(!isValidNationalCode(nc)){ document.getElementById('f_err').textContent='کد ملی وارد‌شده معتبر نیست؛ لطفاً ۱۰ رقم صحیح و با اعداد انگلیسی وارد کنید.'; document.getElementById('f_err').style.display='block'; return; }
+    if(!isValidNationalCode(nc)){ document.getElementById('f_err').textContent='کد ملی باید دقیقاً ۱۰ رقم باشد.'; document.getElementById('f_err').style.display='block'; return; }
     if(loadSubs().some(s=>s.nationalCode===nc)){ document.getElementById('f_dup').style.display='block'; return; }
     state.student={firstName:fn,lastName:ln,fatherName:fa,nationalCode:nc,entryYear:ey,birthYear:by,email:em};
     state.answers={}; state.qIndex=0; state.timeLeft=EXAM_SECONDS;
@@ -249,11 +249,7 @@ function toEnDigits(str){
   });
 }
 function isValidNationalCode(code){
-  if(!/^\d{10}$/.test(code)) return false;
-  if(/^(\d)\1{9}$/.test(code)) return false;
-  let sum=0; for(let i=0;i<9;i++) sum+=parseInt(code[i])*(10-i);
-  const r=sum%11, check=parseInt(code[9]);
-  return (r<2 && check===r) || (r>=2 && check===11-r);
+  return /^\d{10}$/.test(code);
 }
 function val(id){ return document.getElementById(id).value.trim(); }
 
