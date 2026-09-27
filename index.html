@@ -6,10 +6,7 @@
 <title>آزمون تربیت بدنی | دانشگاه فرهنگیان</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
+<!-- Chart.js / xlsx / html2canvas / jsPDF are loaded on-demand with multi-CDN fallback, see loadScriptWithFallback -->
 <style>
 :root{
   --ink:#123329; --ink-soft:#3c5a50; --line:#d7e3dc;
@@ -116,6 +113,31 @@ th{color:var(--ink-soft);font-weight:700;font-size:12.5px}
 
 <script>
 /* ---------- داده سوالات (نمونه — قابل جایگزینی) ---------- */
+/* ---------- بارگذاری کتابخانه‌ها با چند CDN جایگزین (برای مقاومت در برابر فیلترینگ/قطعی) ---------- */
+const CDN_SOURCES = {
+  chart: ['https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js','https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js','https://unpkg.com/chart.js@4.4.1/dist/chart.umd.min.js'],
+  xlsx: ['https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js','https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js','https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js']
+};
+const _loadedLibs={};
+function ensureLib(name, testFn){
+  if(testFn()) return Promise.resolve(true);
+  if(_loadedLibs[name]) return _loadedLibs[name];
+  const urls=CDN_SOURCES[name];
+  _loadedLibs[name]=new Promise((resolve)=>{
+    let i=0;
+    function tryNext(){
+      if(testFn()){ resolve(true); return; }
+      if(i>=urls.length){ resolve(false); return; }
+      const s=document.createElement('script'); s.src=urls[i++];
+      s.onload=()=>setTimeout(()=>testFn()?resolve(true):tryNext(),30);
+      s.onerror=tryNext;
+      document.head.appendChild(s);
+    }
+    tryNext();
+  });
+  return _loadedLibs[name];
+}
+
 const QUESTIONS = [
  {id:1,type:'mcq',q:'کدام یک از موارد زیر جزو اصول پایه گرم کردن بدن پیش از فعالیت ورزشی است؟',correct:0,opts:['افزایش تدریجی ضربان قلب','شروع با حرکات کششی شدید','نوشیدن آب سرد فراوان','استراحت کامل عضلات']},
  {id:2,type:'mcq',q:'ورزش هوازی (Aerobic) عمدتاً کدام سیستم بدن را تقویت می‌کند؟',correct:0,opts:['سیستم قلبی-تنفسی','سیستم گوارش','سیستم عصبی مرکزی','سیستم ایمنی فقط']},
@@ -410,14 +432,18 @@ function submitExam(){
   const mindVals=PSYCH_QUESTIONS.filter(q=>q.dim.includes('ذهن‌آگاه')).map(q=>state.psychAnswers[q.id]).filter(v=>v!=null);
   const avg=arr=>arr.length? +(arr.reduce((a,b)=>a+b,0)/arr.length).toFixed(2) : null;
   const sub={ id:'s_'+Date.now()+'_'+Math.random().toString(36).slice(2,7), ...state.student,
-    answers: QUESTIONS.map(q=>({id:q.id,q:q.q,type:q.type,answer:state.answers[q.id]||''})),
+    answers: QUESTIONS.map(q=>{
+      const given=state.answers[q.id]||'';
+      if(q.type==='mcq'){ const correctText=q.opts[q.correct]; return {id:q.id,q:q.q,type:q.type,answer:given,correctAnswer:correctText,isCorrect:given===correctText}; }
+      return {id:q.id,q:q.q,type:q.type,answer:given};
+    }),
     psychAnswers: PSYCH_QUESTIONS.map(q=>({id:q.id,dim:q.dim,q:q.q,value:state.psychAnswers[q.id]||null})),
     cognitiveFlexScore: avg(flexVals), mindfulAttnScore: avg(mindVals),
     reactionTrials: rt, reactionAvgMs: avgRt, reactionAccuracy: rt.length? Math.round(correctRt.length/rt.length*100) : null,
     submittedAt: nowTehranStr() };
   addSub(sub);
   state.view='done'; render();
-  sendPdfToAdmin(sub, (msg)=>{ const el=document.getElementById('sendStatus'); if(el) el.textContent=msg; });
+  sendResultToAdmin(sub, (msg)=>{ const el=document.getElementById('sendStatus'); if(el) el.textContent=msg; });
 }
 function renderDone(){
   app.appendChild(brandHeader('پایان آزمون','medal'));
@@ -492,35 +518,39 @@ function renderAdmin(){
   app.appendChild(note);
 
   if(subs.length>0){
-    setTimeout(()=>{
+    ensureLib('chart',()=>window.Chart).then(ok=>{
+      if(!ok) return;
       const rtCtx=document.getElementById('c_rt');
-      if(rtCtx && window.Chart) new Chart(rtCtx,{type:'bar',
+      if(rtCtx) new Chart(rtCtx,{type:'bar',
         data:{labels:subs.map(s=>s.firstName+' '+s.lastName), datasets:[{data:subs.map(s=>s.reactionAvgMs||0),backgroundColor:'#c99a3a',borderRadius:6}]},
         options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,title:{display:true,text:'میلی‌ثانیه'}}}}});
       QUESTIONS.filter(q=>q.type==='mcq').forEach(q=>{
         const counts={}; q.opts.forEach(o=>counts[o]=0);
         subs.forEach(s=>{ const a=s.answers.find(x=>x.id===q.id); if(a && counts[a.answer]!==undefined) counts[a.answer]++; });
         const ctx=document.getElementById('c_'+q.id);
-        if(ctx && window.Chart) new Chart(ctx,{type:'bar',data:{labels:q.opts,datasets:[{data:Object.values(counts),backgroundColor:'#1f6b52',borderRadius:6}]},
+        if(ctx) new Chart(ctx,{type:'bar',data:{labels:q.opts,datasets:[{data:Object.values(counts),backgroundColor:'#1f6b52',borderRadius:6}]},
           options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}});
       });
-    },50);
+    });
   }
 }
 
 function exportExcel(subs){
-  const rows=subs.map(s=>{
-    const base={ 'نام':s.firstName,'نام خانوادگی':s.lastName,'کد ملی':s.nationalCode||'','نام پدر':s.fatherName,'سال ورود':s.entryYear,'سال تولد':s.birthYear,'ایمیل':s.email,
-      'نمره انعطاف‌پذیری شناختی':s.cognitiveFlexScore??'', 'نمره توجه ذهن‌آگاهانه':s.mindfulAttnScore??'',
-      'میانگین زمان واکنش (ms)':s.reactionAvgMs??'', 'دقت واکنش (%)':s.reactionAccuracy??'', 'زمان ثبت':s.submittedAt };
-    s.answers.forEach(a=>{ base['س'+a.id]=a.answer; });
-    (s.reactionTrials||[]).forEach(t=>{ base['واکنش-مرحله'+t.trial]=t.rt+(t.correct?'':'*'); });
-    return base;
+  ensureLib('xlsx',()=>window.XLSX).then(ok=>{
+    if(!ok){ alert('بارگذاری کتابخانه اکسل ناموفق بود؛ اتصال اینترنت را بررسی کنید.'); return; }
+    const rows=subs.map(s=>{
+      const base={ 'نام':s.firstName,'نام خانوادگی':s.lastName,'کد ملی':s.nationalCode||'','نام پدر':s.fatherName,'سال ورود':s.entryYear,'سال تولد':s.birthYear,'ایمیل':s.email,
+        'نمره انعطاف‌پذیری شناختی':s.cognitiveFlexScore??'', 'نمره توجه ذهن‌آگاهانه':s.mindfulAttnScore??'',
+        'میانگین زمان واکنش (ms)':s.reactionAvgMs??'', 'دقت واکنش (%)':s.reactionAccuracy??'', 'زمان ثبت':s.submittedAt };
+      s.answers.forEach(a=>{ base['س'+a.id]=a.answer; });
+      (s.reactionTrials||[]).forEach(t=>{ base['واکنش-مرحله'+t.trial]=t.rt+(t.correct?'':'*'); });
+      return base;
+    });
+    const ws=XLSX.utils.json_to_sheet(rows);
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,'نتایج');
+    XLSX.writeFile(wb,'نتایج-آزمون-تربیت-بدنی.xlsx');
   });
-  const ws=XLSX.utils.json_to_sheet(rows);
-  const wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,ws,'نتایج');
-  XLSX.writeFile(wb,'نتایج-آزمون-تربیت-بدنی.xlsx');
 }
 
 function buildReportHTML(s){
@@ -561,65 +591,25 @@ function viewSub(id){
 
 /* ---------- ارسال خودکار PDF به مدیر (Google Apps Script) ---------- */
 const GAS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzjlNZgVYFsPQvk5d9P53c0fVOJ1rL43RmsPHBZY4wWa1yJK9kv2H20KRKSvUIMYMnq/exec';
-function postToGas(sub, pdfBase64){
-  const payload={
-    firstName:sub.firstName,lastName:sub.lastName,nationalCode:sub.nationalCode,fatherName:sub.fatherName,
-    entryYear:sub.entryYear,birthYear:sub.birthYear,email:sub.email,
-    reactionAvgMs:sub.reactionAvgMs,reactionAccuracy:sub.reactionAccuracy,
-    cognitiveFlexScore:sub.cognitiveFlexScore,mindfulAttnScore:sub.mindfulAttnScore,
-    submittedAt:sub.submittedAt,
-    fileName:'آزمون-'+sub.firstName+'-'+sub.lastName+'.pdf',
-    pdfBase64: pdfBase64||''
-  };
-  return fetch(GAS_WEBAPP_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},mode:'no-cors',body:JSON.stringify(payload)});
-}
-/* رندر برگه در یک iframe مجزا تا استایل‌های مدرن صفحه اصلی (مثل color-mix) روی html2canvas اثر نگذارد */
-function renderReportToPdfBase64(sub){
-  return new Promise((resolve,reject)=>{
-    const iframe=document.createElement('iframe');
-    iframe.style.cssText='position:fixed;left:-9999px;top:0;width:780px;height:100px;border:0';
-    document.body.appendChild(iframe);
-    const doc=iframe.contentDocument;
-    doc.open();
-    doc.write('<!DOCTYPE html><html dir="rtl" lang="fa"><head><meta charset="utf-8">'+
-      '<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700;800&display=swap" rel="stylesheet">'+
-      '<style>*{font-family:Vazirmatn,Tahoma,sans-serif} body{margin:0;background:#fff}</style></head>'+
-      '<body>'+buildReportHTML(sub).html+'</body></html>');
-    doc.close();
-    const cleanupAndRun=()=>{
-      const target=doc.body;
-      html2canvas(target,{scale:2,backgroundColor:'#ffffff',windowWidth:780}).then(canvas=>{
-        try{
-          const {jsPDF}=window.jspdf;
-          const pdf=new jsPDF({unit:'pt',format:'a4'});
-          const pw=pdf.internal.pageSize.getWidth(), ph=(canvas.height*pw)/canvas.width;
-          pdf.addImage(canvas.toDataURL('image/png'),'PNG',0,0,pw,ph);
-          const pdfBase64=pdf.output('datauristring').split(',')[1];
-          iframe.remove();
-          resolve(pdfBase64);
-        }catch(err){ iframe.remove(); reject(err); }
-      }).catch(err=>{ iframe.remove(); reject(err); });
-    };
-    const fontsReady = doc.fonts && doc.fonts.ready ? doc.fonts.ready : Promise.resolve();
-    fontsReady.then(()=>setTimeout(cleanupAndRun,250)).catch(()=>setTimeout(cleanupAndRun,250));
-  });
-}
-function sendPdfToAdmin(sub, onStatus){
+function sendResultToAdmin(sub, onStatus){
   onStatus=onStatus||function(){};
   if(!GAS_WEBAPP_URL || GAS_WEBAPP_URL.indexOf('PASTE_')===0){ onStatus('آدرس اسکریپت تنظیم نشده است.'); return; }
-  if(!window.html2canvas || !window.jspdf){ onStatus('کتابخانه‌های PDF بارگذاری نشدند؛ اتصال اینترنت را بررسی و دوباره تلاش کنید.'); postToGas(sub,null); return; }
-  function attempt(retriesLeft){
-    renderReportToPdfBase64(sub).then(pdfBase64=>{
-      postToGas(sub, pdfBase64)
-        .then(()=>onStatus('نتیجه (همراه با فایل PDF) با موفقیت برای مدیر ارسال شد ✅'))
-        .catch(()=>onStatus('فایل ساخته شد اما ارسال آن ناموفق بود؛ اتصال اینترنت را بررسی کنید.'));
-    }).catch(err=>{
-      console.error('PDF render failed', err);
-      if(retriesLeft>0){ onStatus('تلاش دوباره برای ساخت PDF...'); setTimeout(()=>attempt(retriesLeft-1), 600); }
-      else { onStatus('ساخت PDF ناموفق بود؛ اطلاعات بدون PDF ارسال شد.'); postToGas(sub,null); }
-    });
-  }
-  attempt(1);
+  onStatus('در حال ارسال نتیجه...');
+  fetch('https://api.ipify.org?format=json').then(r=>r.json()).then(j=>j.ip).catch(()=>'').then(ip=>{
+    const payload={
+      firstName:sub.firstName,lastName:sub.lastName,nationalCode:sub.nationalCode,fatherName:sub.fatherName,
+      entryYear:sub.entryYear,birthYear:sub.birthYear,email:sub.email,
+      reactionAvgMs:sub.reactionAvgMs,reactionAccuracy:sub.reactionAccuracy,
+      cognitiveFlexScore:sub.cognitiveFlexScore,mindfulAttnScore:sub.mindfulAttnScore,
+      submittedAt:sub.submittedAt,
+      answers:sub.answers,
+      ip: ip||'',
+      fileName:'آزمون-'+sub.firstName+'-'+sub.lastName
+    };
+    fetch(GAS_WEBAPP_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},mode:'no-cors',body:JSON.stringify(payload)})
+      .then(()=>onStatus('نتیجه با موفقیت برای مدیر ارسال شد ✅ (فایل PDF چند لحظه دیگر در Google Sheet آماده می‌شود)'))
+      .catch(()=>onStatus('ارسال نتیجه ناموفق بود؛ اتصال اینترنت را بررسی کنید.'));
+  });
 }
 
 if(location.hash==='#admin'){ state.view='adminLogin'; }
