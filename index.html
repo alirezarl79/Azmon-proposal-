@@ -590,7 +590,7 @@ function viewSub(id){
 }
 
 /* ---------- ارسال خودکار PDF به مدیر (Google Apps Script) ---------- */
-const GAS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzjlNZgVYFsPQvk5d9P53c0fVOJ1rL43RmsPHBZY4wWa1yJK9kv2H20KRKSvUIMYMnq/exec';
+const GAS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbz0lR56NGCizX0Wbx1zPhDiBYZMPHSEuqvROH-ox4kl3EPw6dpLJYHTMJktRKMUdavl/exec';
 function sendResultToAdmin(sub, onStatus){
   onStatus=onStatus||function(){};
   if(!GAS_WEBAPP_URL || GAS_WEBAPP_URL.indexOf('PASTE_')===0){ onStatus('آدرس اسکریپت تنظیم نشده است.'); return; }
