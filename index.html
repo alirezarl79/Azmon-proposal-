@@ -208,13 +208,14 @@ let state = { view:'info', student:null, answers:{}, psychAnswers:{}, timeLeft:E
 
 const app = document.getElementById('app');
 function render(){ app.innerHTML=''; 
-  if(state.view==='info') return renderInfo();
-  if(state.view==='reaction') return renderReaction();
-  if(state.view==='psych') return renderPsych();
-  if(state.view==='quiz') return renderQuiz();
-  if(state.view==='done') return renderDone();
-  if(state.view==='adminLogin') return renderAdminLogin();
-  if(state.view==='admin') return renderAdmin();
+  if(state.view==='info') renderInfo();
+  else if(state.view==='reaction') renderReaction();
+  else if(state.view==='psych') renderPsych();
+  else if(state.view==='quiz') renderQuiz();
+  else if(state.view==='done') renderDone();
+  else if(state.view==='adminLogin') renderAdminLogin();
+  else if(state.view==='admin') renderAdmin();
+  window.scrollTo(0,0);
 }
 function brandHeader(sub, icon){
   const ICONS={
